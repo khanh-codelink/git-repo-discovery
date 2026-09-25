@@ -1,0 +1,26 @@
+[project]
+name = "git-repo-discovery"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "khanh-codelink", email = "khanh.nguyen@codelink.io" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "google-genai>=2.24.0",
+    "ollama>=0.6.0",
+    "python-dotenv>=1.2.3",
+]
+
+[project.scripts]
+git-repo-discovery = "git_repo_discovery:main"
+
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.16.8",
+]
