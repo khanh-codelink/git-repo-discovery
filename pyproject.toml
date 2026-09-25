@@ -26,3 +26,6 @@ build-backend = "uv_build"
 dev = [
     "ruff>=0.16.8",
 ]
+
+[tool.vercel]
+entrypoint = "src.git_repo_discovery.api.index:app"
