@@ -13,7 +13,8 @@ app = FastAPI()
 # Allows your React frontend (local dev + Vercel deployment) to talk to this API
 allowed_origins = [
     "http://localhost:3000",                  # React local development
-    "http://localhost:5173",                  # Vite local development
+    "http://localhost:5173",  
+    "https://git-discovery-frontend.vercel.app",
     os.environ.get("FE_APP_DOMAIN")
 ]
 
