@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
@@ -12,7 +14,7 @@ app = FastAPI()
 allowed_origins = [
     "http://localhost:3000",                  # React local development
     "http://localhost:5173",                  # Vite local development
-    "https://your-react-project.vercel.app",  # Replace with your production Vercel URL
+    os.environ.get("FE_APP_DOMAIN")
 ]
 
 app.add_middleware(
