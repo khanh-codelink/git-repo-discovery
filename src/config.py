@@ -1,23 +1,28 @@
 from functools import lru_cache
-from typing import Annotated, Literal
+from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class AzureOpenAIConfig(BaseModel):
-    """Configuration for Azure OpenAI API."""
+class AzureOpenAIConfig(BaseSettings):
+    """Configuration for Azure OpenAI API, read from `AZURE_OPENAI_*` env vars."""
+
+    model_config = SettingsConfigDict(
+        env_prefix="AZURE_OPENAI_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+        hide_input_in_errors=True,
+    )
 
     provider: Literal["azure_openai"] = "azure_openai"
 
-    api_key: str
+    api_key: SecretStr
     endpoint: str
     model_name: str
-    endpoint_version: Literal["2023-03-15-preview", "2023-06-01-preview"] = "2023-06-01-preview"
+    endpoint_version: str = "2023-06-01-preview"
     deployment_name: str
-
-
-LLMSettings = Annotated[AzureOpenAIConfig, Field(discriminator="provider")]
 
 
 class GitRepoDiscoveryConfig(BaseSettings):
@@ -26,10 +31,12 @@ class GitRepoDiscoveryConfig(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
+        extra="ignore",
+        hide_input_in_errors=True,
     )
 
-    github_token: Annotated[str, Field(env="GITHUB_TOKEN")]
-    llm_settings: LLMSettings = AzureOpenAIConfig()
+    github_token: SecretStr
+    llm_settings: AzureOpenAIConfig = Field(default_factory=AzureOpenAIConfig)
 
 
 @lru_cache
@@ -41,6 +48,3 @@ def get_config() -> GitRepoDiscoveryConfig:
 def get_settings() -> GitRepoDiscoveryConfig:
     """Get the settings for Git repository discovery."""
     return get_config()
-
-
-settings = get_settings()

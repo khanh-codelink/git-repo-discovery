@@ -8,20 +8,26 @@ authors = [
 ]
 requires-python = ">=3.13"
 dependencies = [
+    "azure-identity>=1.26.0",
     "fastapi>=0.141.1",
     "google-genai>=2.24.0",
+    "langchain-azure-ai>=1.2.3",
+    "langchain-openai>=1.6.7",
+    "langgraph>=1.2.14",
     "ollama>=0.6.0",
+    "pydantic-settings>=2.15.0",
     "pydantic>=2.13.5",
     "python-dotenv>=1.2.3",
     "supabase>=2.31.0",
 ]
 
-[project.scripts]
-git-repo-discovery = "git_repo_discovery:main"
-
 [build-system]
 requires = ["uv_build>=0.12.5,<0.13.0"]
 build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "src"
+module-root = ""
 
 [dependency-groups]
 dev = [
