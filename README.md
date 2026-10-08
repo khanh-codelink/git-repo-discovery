@@ -2,6 +2,18 @@
 
 FastAPI backend for Git Repo Discovery.
 
+## Automatically Ruff and Lint check
+
+```
+uv sync
+pre-commit install
+
+# Optional, run the hooks once on the whole codebase to clean it up:
+pre-commit run --all-files
+```
+
+Once done, every commit will trigger the Ruff and Lint format when pushing to any remote branchs.
+
 ## Prerequisites
 
 - Python 3.13 or newer
