@@ -1,0 +1,10 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version — keep in sync with the version pinned in pyproject.toml
+    rev: v0.16.10
+    hooks:
+      # Lint (and auto-fix what's safely fixable). Must run before the formatter.
+      - id: ruff-check
+        args: [--fix]
+      # Format
+      - id: ruff-format
