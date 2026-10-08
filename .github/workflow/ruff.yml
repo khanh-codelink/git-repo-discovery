@@ -1,0 +1,27 @@
+name: Ruff
+
+on:
+  push:
+    branches: ["**"] # run on every branch you push to
+  pull_request: # also check PRs before merging
+
+permissions:
+  contents: read
+
+jobs:
+  ruff:
+    name: Lint & format check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v5
+
+      # Lint: fails the job if any rule from your config is violated
+      - name: Ruff check
+        uses: astral-sh/ruff-action@v4.1.0
+        with:
+          args: "check --output-format=github"
+
+      # Format: fails if any file isn't formatted (shows a diff, changes nothing)
+      - name: Ruff format check
+        run: ruff format --check --diff
