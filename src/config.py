@@ -36,6 +36,10 @@ class GitRepoDiscoveryConfig(BaseSettings):
     )
 
     github_token: SecretStr
+
+    supabase_url: str
+    supabase_key: SecretStr
+
     llm_settings: AzureOpenAIConfig = Field(default_factory=AzureOpenAIConfig)
 
 
