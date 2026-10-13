@@ -59,23 +59,15 @@ Anything that uses `src.config` or `LLMService` also needs `GITHUB_TOKEN` and th
 From the repository root, run:
 
 ```sh
-uv run uvicorn src.git_repo_discovery.api.index:app --reload
+uv run uvicorn src.main:app --reload
 ```
 
 or
 
 ```sh
-uv run uvicorn src.git_repo_discovery.api.index:app \
+uv run uvicorn src.main:app \
   --reload \
   --env-file .env.development
 ```
 
 The API is available at <http://127.0.0.1:8000>. Open <http://127.0.0.1:8000/docs> for the interactive API documentation. The root endpoint at <http://127.0.0.1:8000/> returns a basic health status.
-
-## Run local scripts
-
-Scripts in `src/local_scripts/` are run as modules from the repository root, so that `.env` is found and `src.*` imports resolve:
-
-```sh
-uv run python -m src.local_scripts.git_api
-```
