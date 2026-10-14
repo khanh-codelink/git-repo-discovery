@@ -15,14 +15,16 @@ dependencies = [
     "langchain-openai>=1.6.7",
     "langgraph>=1.2.14",
     "ollama>=0.6.0",
+    "pre-commit>=4.7.0",
     "pydantic-settings>=2.15.0",
     "pydantic>=2.13.5",
+    "pygithub>=2.10.0",
     "python-dotenv>=1.2.3",
     "supabase>=2.31.0",
 ]
 
 [build-system]
-requires = ["uv_build>=0.12.5,<0.13.0"]
+requires = ["uv_build>=0.12.5,<0.14.0"]
 build-backend = "uv_build"
 
 [tool.uv.build-backend]

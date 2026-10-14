@@ -1,15 +1,14 @@
-import os
-
-from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, Header, HTTPException
 from supabase import Client, create_client
 
-load_dotenv()
+from src.config import get_settings
+
+config = get_settings()
 router = APIRouter()
 
 # Initialize Supabase Client (Use the public ANON key, NOT the service_role key)
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_ANON_KEY = os.environ.get("SUPABASE_KEY")
+SUPABASE_URL = config.supabase_url
+SUPABASE_ANON_KEY = config.supabase_key.get_secret_value()
 
 if not SUPABASE_URL or not SUPABASE_ANON_KEY:
     raise RuntimeError("Missing SUPABASE_URL or SUPABASE_KEY environment variables")
