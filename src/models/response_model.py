@@ -26,15 +26,6 @@ class SearchResponse(BaseModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
-class SummaryResponse(BaseModel):
-    summary_id: str = Field(..., description="A unique identifier for the summary operation.")
-    summary: str = Field(..., description="The summary of the repository.")
-    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
-    selected_repo: RepoResult | None = Field(
-        None, description="The selected repository for which the summary was generated."
-    )
-
-
 class ComparisonResponse(BaseModel):
     comparison_id: str = Field(..., description="A unique identifier for the comparison operation.")
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
@@ -49,4 +40,6 @@ class ComparisonResponse(BaseModel):
 
 class SearchQuery(BaseModel):
     query: str = Field(..., description="The search query to find repositories.")
-    limit: int | None = Field(10, description="The maximum number of repositories to return.")
+    limit: int = Field(
+        10, ge=1, le=100, description="The maximum number of repositories to return."
+    )

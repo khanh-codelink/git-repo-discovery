@@ -1,4 +1,5 @@
 import uuid
+from itertools import islice
 
 from fastapi import APIRouter, HTTPException
 from fastapi.concurrency import run_in_threadpool
@@ -14,6 +15,8 @@ router = APIRouter()
 def _search_github(github_client: Github, query: str, limit: int) -> list[RepoResult]:
     """Run the GitHub search (blocking: PyGithub fetches pages lazily while iterating)."""
     repositories = github_client.search_repositories(query=query)
+    # Iterate rather than slice: slicing indexes into the list and raises IndexError
+    # when the search API reports a next page but returns it empty.
     return [
         RepoResult(
             repo_id=str(repo.id),
@@ -24,7 +27,7 @@ def _search_github(github_client: Github, query: str, limit: int) -> list[RepoRe
             html_url=repo.html_url,
             stargazers_count=repo.stargazers_count,
         )
-        for repo in repositories[:limit]
+        for repo in islice(repositories, limit)
     ]
 
 
