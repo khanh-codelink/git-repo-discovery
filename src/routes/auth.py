@@ -13,9 +13,6 @@ SUPABASE_ANON_KEY = config.supabase_key.get_secret_value()
 if not SUPABASE_URL or not SUPABASE_ANON_KEY:
     raise RuntimeError("Missing SUPABASE_URL or SUPABASE_KEY environment variables")
 
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
-
-
 # Authentication & RLS Dependency
 def get_authenticated_client(authorization: str = Header(None)) -> Client:
     """
@@ -28,14 +25,15 @@ def get_authenticated_client(authorization: str = Header(None)) -> Client:
     token = authorization.split(" ")[1]
 
     try:
+        client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
         # Verify that the JWT is valid with Supabase
-        user_response = supabase.auth.get_user(token)
+        user_response = client.auth.get_user(token)
         if not user_response or not user_response.user:
             raise HTTPException(status_code=401, detail="Invalid or expired token")
 
         # Set the token session so all database queries executed by this client respect RLS
-        supabase.auth.set_session(access_token=token, refresh_token=token)
-        return supabase
+        client.auth.set_session(access_token=token, refresh_token=token)
+        return client
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Authentication error: {str(e)}")
 
