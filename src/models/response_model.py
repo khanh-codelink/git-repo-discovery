@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 class RepoResult(BaseModel):
     repo_id: str = Field(..., description="The unique identifier of the repository.")
     name: str = Field(..., description="The name of the repository.")
+    topics: list[str] = Field(..., description="The list of topics associated with the repository.")
     full_name: str = Field(..., description="The full name of the repository, including the owner.")
     description: str | None = Field(None, description="A brief description of the repository.")
     html_url: str = Field(..., description="The URL to access the repository on GitHub.")

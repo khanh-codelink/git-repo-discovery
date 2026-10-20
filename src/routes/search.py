@@ -19,6 +19,7 @@ def _search_github(github_client: Github, query: str, limit: int) -> list[RepoRe
             repo_id=str(repo.id),
             name=repo.name,
             full_name=repo.full_name,
+            topics=repo.topics,
             description=repo.description,
             html_url=repo.html_url,
             stargazers_count=repo.stargazers_count,
