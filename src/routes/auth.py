@@ -1,7 +1,16 @@
+from dataclasses import dataclass
+
 from fastapi import APIRouter, Depends, Header, HTTPException
 from supabase import Client, create_client
 
 from src.config import get_settings
+
+
+@dataclass(frozen=True)
+class AuthContext:
+    client: Client
+    user_id: str
+
 
 config = get_settings()
 router = APIRouter()
@@ -13,8 +22,9 @@ SUPABASE_ANON_KEY = config.supabase_key.get_secret_value()
 if not SUPABASE_URL or not SUPABASE_ANON_KEY:
     raise RuntimeError("Missing SUPABASE_URL or SUPABASE_KEY environment variables")
 
+
 # Authentication & RLS Dependency
-def get_authenticated_client(authorization: str = Header(None)) -> Client:
+def get_auth_context(authorization: str = Header(None)) -> AuthContext:
     """
     Extracts the Bearer token sent by React, verifies the Google OAuth user session,
     and configures the Supabase client so Postgres RLS policies (auth.uid()) apply.
@@ -33,9 +43,13 @@ def get_authenticated_client(authorization: str = Header(None)) -> Client:
 
         # Set the token session so all database queries executed by this client respect RLS
         client.auth.set_session(access_token=token, refresh_token=token)
-        return client
+        return AuthContext(client=client, user_id=user_response.user.id)
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Authentication error: {str(e)}")
+
+
+def get_authenticated_client(auth_context: AuthContext = Depends(get_auth_context)) -> Client:
+    return auth_context.client
 
 
 # Protected Endpoints

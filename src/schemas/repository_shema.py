@@ -1,6 +1,5 @@
-from datetime import UTC, datetime
-
 from pydantic import BaseModel, Field
+
 
 class RepoInput(BaseModel):
     repo_id: str = Field(..., description="The unique identifier of the repository.")
@@ -12,14 +11,21 @@ class RepoInput(BaseModel):
         ..., description="The number of stars the repository has received."
     )
 
+
 class SaveRepositoryInput(BaseModel):
     repositories: list[RepoInput] = Field(..., description="A list of repositories to be saved.")
 
+
 class SaveRepositoryResponse(BaseModel):
-    success: bool = Field(..., description="Indicates whether the repositories were successfully saved.")
+    success: bool = Field(
+        ..., description="Indicates whether the repositories were successfully saved."
+    )
+
 
 class RepositoryResponse(BaseModel):
-    id: int = Field(..., description="The unique identifier of the repository record in the database.")
+    id: int = Field(
+        ..., description="The unique identifier of the repository record in the database."
+    )
     repo_id: str = Field(..., description="The unique identifier of the repository.")
     name: str = Field(..., description="The name of the repository.")
     full_name: str = Field(..., description="The full name of the repository, including the owner.")
