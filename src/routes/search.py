@@ -7,7 +7,7 @@ from github import Github
 
 from src.agents.search_query import UNSUPPORTED, analyze_query
 from src.auth.github_check import GithubClient
-from src.models.response_model import RepoResult, SearchQuery, SearchResponse
+from src.schemas.report_schema import RepoResult, SearchQuery, SearchResponse
 
 router = APIRouter()
 

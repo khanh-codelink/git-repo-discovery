@@ -2,7 +2,7 @@ import asyncio
 import uuid
 from typing import Literal
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.concurrency import run_in_threadpool
 from github import Github, GithubException
 from supabase import Client
@@ -11,10 +11,7 @@ from src.agents.readme_extraction import ReadmeExtract, extract_readme
 from src.agents.repo_report import generate_report, render_report_markdown
 from src.auth.github_check import GithubClient
 from src.routes.auth import get_authenticated_client
-from src.schemas.report_schema import (
-    SummaryRequest,
-    SummaryResponse,
-)
+from src.schemas.report_schema import ComparisonResponse, RepositoriesRequest, SummaryResponse
 from src.schemas.repository_shema import RepoInput
 
 router = APIRouter()
@@ -58,7 +55,7 @@ def _missing_readme(
 
 @router.post("/summarize", response_model=SummaryResponse)
 async def summarize_repositories(
-    request: SummaryRequest,
+    request: RepositoriesRequest,
     github_client: GithubClient,
     db: Client = Depends(get_authenticated_client),
 ):
@@ -69,15 +66,48 @@ async def summarize_repositories(
     repositories = request.repositories[:1]
     readme = await _fetch_readmes(github_client, repositories, "summary")
     report = await generate_report(list(zip(repositories, readme, strict=True)), "summary")
-
-    # db.table("reports").insert({**report.model_dump(mode="json"), "user_id": str(user.id)}).execute()
-
-    return SummaryResponse(
+    response = SummaryResponse(
         summary_id=str(uuid.uuid4()),
         summary=render_report_markdown(report),
         selected_repo=repositories[0] if len(repositories) == 1 else None,
-        selected_repos=repositories,
         missing_readme=_missing_readme(repositories, readme),
         report=report,
         report_type="summary",
     )
+    # Columns mirror SummaryResponse; the LLM report is stored whole in the `report` jsonb column.
+    db.table("summaries").insert(
+        {**response.model_dump(mode="json"), "user_id": str(user.id)}
+    ).execute()
+    return response
+
+
+@router.post("/compare", response_model=ComparisonResponse)
+async def compare_repositories(
+    request: RepositoriesRequest,
+    github_client: GithubClient,
+    db: Client = Depends(get_authenticated_client),
+):
+    user = db.auth.get_user().user
+
+    assert user is not None
+
+    repositories = request.repositories
+
+    assert len(repositories) > 1, HTTPException(401, "More than 1 repos are required")
+
+    readme = await _fetch_readmes(github_client, repositories, "compare")
+    report = await generate_report(list(zip(repositories, readme, strict=True)), "compare")
+
+    response = ComparisonResponse(
+        comparison_id=str(uuid.uuid4()),
+        comparison=render_report_markdown(report),
+        selected_repos=repositories,
+        missing_readme=_missing_readme(repositories, readme),
+        report=report,
+        report_type="compare",
+    )
+    # Columns mirror ComparisonResponse; the LLM report is stored whole in the `report` jsonb column.
+    db.table("comparisons").insert(
+        {**response.model_dump(mode="json"), "user_id": str(user.id)}
+    ).execute()
+    return response
