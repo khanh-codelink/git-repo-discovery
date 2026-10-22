@@ -1,6 +1,9 @@
+from typing import Literal
+
 from src.agents.readme_extraction import ReadmeExtract
+from src.agents.system_prompt import COMPARISON_SYS_PROMPT, SUMMARY_SYS_PROMPT
 from src.llm import LLMService
-from src.schemas.report_schema import RepoAnalysis, RepoComparisonReport
+from src.schemas.report_schema import RepoAnalysis, RepoReport
 from src.schemas.repository_shema import RepoInput
 
 
@@ -17,27 +20,27 @@ def _format_repository(repo: RepoInput, readme: ReadmeExtract | None) -> str:
 
 async def generate_report(
     repositories: list[tuple[RepoInput, ReadmeExtract | None]],
-) -> RepoComparisonReport:
+    mode: Literal["summary", "compare"] = "summary",
+) -> RepoReport:
     """Summarise each repository from its README and compare them against each other."""
-    system = (
-        "You are a software analyst helping a developer choose between GitHub repositories. "
-        "You will be given the metadata and an extract of the README of each repository. "
-        "For each repository, summarise what it does, its key features, tech stack, use cases, "
-        "strengths and limitations. Then compare the repositories on the 3 to 6 criteria that "
-        "matter most for choosing between them, and finish with a recommendation. "
-        "Base everything on the provided content only; when information is missing, say so in "
-        "the limitations instead of guessing. Refer to repositories by their exact full name. "
-        "If there is only one repository, return an empty comparison list, and make the "
-        "recommendation about who should use it and when."
-    )
+    system = None
+    if mode == "summary":
+        system = SUMMARY_SYS_PROMPT
+    elif mode == "compare":
+        system = COMPARISON_SYS_PROMPT
+
+    assert system is not None, Exception("No system prompt selected.")
+
     content = "\n\n---\n\n".join(_format_repository(repo, readme) for repo, readme in repositories)
+
     messages = [
         {"role": "system", "content": system},
         {"role": "user", "content": content},
     ]
 
-    llm = LLMService.active_llm().with_structured_output(RepoComparisonReport)
-    return await llm.ainvoke(messages)
+    llm = LLMService.active_llm().with_structured_output(RepoReport)
+    report: RepoReport = await llm.ainvoke(messages)
+    return report
 
 
 def _render_list(title: str, items: list[str]) -> str:
@@ -60,7 +63,7 @@ def _render_analysis(analysis: RepoAnalysis, heading: str) -> str:
     return "\n\n".join(part for part in parts if part)
 
 
-def render_report_markdown(report: RepoComparisonReport) -> str:
+def render_report_markdown(report: RepoReport) -> str:
     """Render the report as markdown (headings and lists only, no tables)."""
     is_comparison = len(report.repositories) > 1
     parts = [f"## Overview\n\n{report.overview}"] if is_comparison else []

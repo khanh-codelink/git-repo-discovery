@@ -1,8 +1,9 @@
 from datetime import UTC, datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from src.schemas.repository_shema import RepoInput, RepositoryResponse
+from src.schemas.repository_shema import RepoInput
 
 # Keeps the prompt within the model's context window (READMEs are ~6k chars each).
 MAX_REPORT_REPOSITORIES = 5
@@ -42,7 +43,7 @@ class ComparisonCriterion(BaseModel):
     )
 
 
-class RepoComparisonReport(BaseModel):
+class RepoReport(BaseModel):
     overview: str = Field(
         ..., description="A short overview of the selected repositories and how they relate."
     )
@@ -53,20 +54,6 @@ class RepoComparisonReport(BaseModel):
     recommendation: str = Field(
         ..., description="Which repository to choose for which needs, and why."
     )
-
-
-class RepoReportResponse(BaseModel):
-    report_id: str = Field(..., description="A unique identifier for the report.")
-    repositories: list[RepositoryResponse] = Field(
-        ..., description="The selected repositories the report was generated from."
-    )
-    missing_readme: list[str] = Field(
-        default_factory=list,
-        description="Full names of repositories whose README could not be fetched; "
-        "they were analysed from their metadata only.",
-    )
-    report: RepoComparisonReport = Field(..., description="The LLM-generated report.")
-    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class SummaryRequest(BaseModel):
@@ -90,5 +77,6 @@ class SummaryResponse(BaseModel):
         description="Full names of repositories whose README could not be fetched; "
         "they were analysed from their metadata only.",
     )
-    report: RepoComparisonReport = Field(..., description="The structured LLM-generated report.")
+    report: RepoReport = Field(..., description="The structured LLM-generated report.")
+    report_type: Literal["summary", "compare"] = Field(..., description="Report type")
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
