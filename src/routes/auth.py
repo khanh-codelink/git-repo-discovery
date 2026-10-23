@@ -1,10 +1,12 @@
 from fastapi import APIRouter, Depends
 from supabase import Client
-from src.config import get_settings
+
 from src.auth.dependencies import get_authenticated_client
+from src.config import get_settings
 
 config = get_settings()
 router = APIRouter()
+
 
 # Protected Endpoints
 @router.get("/api/profile")

@@ -1,13 +1,16 @@
+from dataclasses import dataclass
 
 from fastapi import Depends, Header, HTTPException
-from src.config import get_settings
 from supabase import Client, create_client
-from dataclasses import dataclass
+
+from src.config import get_settings
+
 
 @dataclass(frozen=True)
 class AuthContext:
     client: Client
     user_id: str
+
 
 # Authentication & RLS Dependency
 def get_auth_context(authorization: str | None = Header(None)) -> AuthContext:
@@ -17,11 +20,11 @@ def get_auth_context(authorization: str | None = Header(None)) -> AuthContext:
     """
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing or malformed Authorization header")
-    
+
     config = get_settings()
     client = create_client(
-      config.supabase_url,
-      config.supabase_key.get_secret_value(),
+        config.supabase_url,
+        config.supabase_key.get_secret_value(),
     )
     token = authorization.split(" ")[1]
 

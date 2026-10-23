@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from .routes import auth, report, git_repo, search
+from .routes import auth, git_repo, report, search
 
 router = APIRouter()
 
