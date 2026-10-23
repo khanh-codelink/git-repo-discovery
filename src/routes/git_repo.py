@@ -1,7 +1,7 @@
 
 from fastapi import APIRouter, Depends
 
-from src.routes.auth import AuthContext, get_auth_context
+from src.auth.dependencies import AuthContext, get_auth_context
 from src.schemas.repository_shema import (
     RepositoryResponse,
     SaveRepositoryInput,
