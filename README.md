@@ -71,3 +71,19 @@ uv run uvicorn src.main:app \
 ```
 
 The API is available at <http://127.0.0.1:8000>. Open <http://127.0.0.1:8000/docs> for the interactive API documentation. The root endpoint at <http://127.0.0.1:8000/> returns a basic health status.
+
+## Database migrations
+
+Alembic manages the Supabase tables created by this backend (`summaries` and `comparisons`). Migrations live in `alembic/versions/` and are written by hand, because the app uses `supabase-py` rather than SQLAlchemy models, so `--autogenerate` has nothing to compare against.
+
+Set `DATABASE_URL` in `.env` to the session pooler connection string from the Supabase dashboard (**Connect** → **Session pooler**, port 5432). The direct connection only works over IPv6, and the transaction pooler (port 6543) is not suited to migrations. URL-encode special characters in the password.
+
+```sh
+uv run alembic upgrade head          # apply all migrations
+uv run alembic current               # show the applied revision
+uv run alembic downgrade -1          # roll back the latest migration
+uv run alembic upgrade head --sql    # print the SQL without running it
+uv run alembic revision -m "describe the change"   # start a new migration
+```
+
+Alembic records the applied revision in `alembic.alembic_version`, a separate schema the Supabase Data API does not expose.
