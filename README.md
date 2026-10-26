@@ -54,6 +54,21 @@ Set `SUPABASE_URL` and `SUPABASE_KEY` in `.env` to your Supabase project URL and
 
 Anything that uses `src.config` or `LLMService` also needs `GITHUB_TOKEN` and the Azure OpenAI settings: `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_MODEL_NAME` and `AZURE_OPENAI_DEPLOYMENT_NAME`. `AZURE_OPENAI_ENDPOINT_VERSION` is optional. Settings are loaded when first used, and a missing value raises a validation error naming the field.
 
+## Run tests
+
+Run the test suite from the repository root:
+
+```sh
+uv run pytest
+```
+
+Run only the unit or integration tests:
+
+```sh
+uv run pytest src/tests/unit
+uv run pytest src/tests/integration
+```
+
 ## Start the development server
 
 From the repository root, run:
