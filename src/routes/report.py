@@ -9,8 +9,8 @@ from supabase import Client
 
 from src.agents.readme_extraction import ReadmeExtract, extract_readme
 from src.agents.repo_report import generate_report, render_report_markdown
+from src.auth.dependencies import get_authenticated_client
 from src.auth.github_check import GithubClient
-from src.routes.auth import get_authenticated_client
 from src.schemas.report_schema import ComparisonResponse, RepositoriesRequest, SummaryResponse
 from src.schemas.repository_shema import RepoInput
 
