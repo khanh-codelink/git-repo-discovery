@@ -5,12 +5,11 @@ from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.concurrency import run_in_threadpool
 from github import Github, GithubException
-from supabase import Client
 
 from src.agents.readme_extraction import ReadmeExtract, extract_readme
 from src.agents.repo_report import generate_report, render_report_markdown
+from src.auth.dependencies import AuthContext, get_auth_context
 from src.auth.github_check import GithubClient
-from src.routes.auth import get_authenticated_client
 from src.schemas.report_schema import ComparisonResponse, RepositoriesRequest, SummaryResponse
 from src.schemas.repository_shema import RepoInput
 
@@ -57,11 +56,12 @@ def _missing_readme(
 async def summarize_repositories(
     request: RepositoriesRequest,
     github_client: GithubClient,
-    db: Client = Depends(get_authenticated_client),
+    context: AuthContext = Depends(get_auth_context),
 ):
-    user = db.auth.get_user().user
+    user_id = context.user_id
+    db = context.client
 
-    assert user is not None
+    assert user_id is not None
 
     repositories = request.repositories[:1]
     readme = await _fetch_readmes(github_client, repositories, "summary")
@@ -76,7 +76,7 @@ async def summarize_repositories(
     )
     # Columns mirror SummaryResponse; the LLM report is stored whole in the `report` jsonb column.
     db.table("summaries").insert(
-        {**response.model_dump(mode="json"), "user_id": str(user.id)}
+        {**response.model_dump(mode="json"), "user_id": str(user_id)}
     ).execute()
     return response
 
@@ -85,11 +85,12 @@ async def summarize_repositories(
 async def compare_repositories(
     request: RepositoriesRequest,
     github_client: GithubClient,
-    db: Client = Depends(get_authenticated_client),
+    context: AuthContext = Depends(get_auth_context),
 ):
-    user = db.auth.get_user().user
+    user_id = context.user_id
+    db = context.client
 
-    assert user is not None
+    assert user_id is not None
 
     repositories = request.repositories
 
@@ -108,6 +109,6 @@ async def compare_repositories(
     )
     # Columns mirror ComparisonResponse; the LLM report is stored whole in the `report` jsonb column.
     db.table("comparisons").insert(
-        {**response.model_dump(mode="json"), "user_id": str(user.id)}
+        {**response.model_dump(mode="json"), "user_id": str(user_id)}
     ).execute()
     return response

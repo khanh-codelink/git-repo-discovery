@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from fastapi import Depends, Header, HTTPException
+from fastapi import Header, HTTPException
 from supabase import Client, create_client
 
 from src.config import get_settings
@@ -38,7 +38,3 @@ def get_auth_context(authorization: str | None = Header(None)) -> AuthContext:
         return AuthContext(client=client, user_id=user_response.user.id)
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Authentication error: {str(e)}")
-
-
-def get_authenticated_client(auth_context: AuthContext = Depends(get_auth_context)) -> Client:
-    return auth_context.client
