@@ -23,23 +23,24 @@ def api():
     finally:
         app.dependency_overrides.clear()
 
+
 def test_get_profile_success(api):
     client, db = api
     db.table.return_value.select.return_value.execute.return_value = MagicMock(
-      data=[{"id": "user-1", "name": "Test User"}]
+        data=[{"id": "user-1", "name": "Test User"}]
     )
     response = client.get("/api/profile")
     assert response.status_code == 200
     assert response.json().get("data")[0] == {"id": "user-1", "name": "Test User"}
 
+
 def test_get_profile_not_found(api):
     client, db = api
-    db.table.return_value.select.return_value.execute.return_value = MagicMock(
-      data=[]
-    )
+    db.table.return_value.select.return_value.execute.return_value = MagicMock(data=[])
     response = client.get("/api/profile")
     assert response.status_code == 200
     assert response.json() == {"data": None, "message": "User profile not found"}
+
 
 def test_get_profile_error_unauthorized():
     app = FastAPI()
