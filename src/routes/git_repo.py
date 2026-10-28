@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends
 
 from src.auth.dependencies import AuthContext, get_auth_context
 from src.schemas.repository_shema import (
-    RepositoryResponse,
+    GetRepositoriesInput,
+    GetRepositoriesResponse,
     SaveRepositoryInput,
     SaveRepositoryResponse,
 )
@@ -19,10 +20,21 @@ async def save_repositories(
     return SaveRepositoryResponse(success=True)
 
 
-@router.get("/repositories", response_model=list[RepositoryResponse])
-async def get_repositories(context: AuthContext = Depends(get_auth_context)):
-    response = service.list_git_repos(context.client, context.user_id)
-    return response.data
+@router.post("/repositories", response_model=GetRepositoriesResponse)
+async def get_repositories(
+    input: GetRepositoriesInput, context: AuthContext = Depends(get_auth_context)
+):
+    response = service.list_git_repos(
+        context.client,
+        context.user_id,
+        page=input.page,
+        per_page=input.per_page,
+        filter=input.filter,
+        sort_by=input.sort_by,
+    )
+    return GetRepositoriesResponse(
+        items=response.data, total=response.count, page=input.page, per_page=input.per_page
+    )
 
 
 @router.delete("/repositories/{repo_id}", response_model=SaveRepositoryResponse)

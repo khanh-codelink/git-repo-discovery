@@ -12,6 +12,13 @@ class RepoInput(BaseModel):
     )
 
 
+class GetRepositoriesInput(BaseModel):
+    page: int | None = Field(None, description="The page number for pagination.")
+    per_page: int | None = Field(None, description="The number of items per page.")
+    filter: dict | None = Field(None, description="Filter criteria for repositories.")
+    sort_by: str | None = Field(None, description="Sort order for the repositories.")
+
+
 class SaveRepositoryInput(BaseModel):
     repositories: list[RepoInput] = Field(..., description="A list of repositories to be saved.")
 
@@ -35,3 +42,12 @@ class RepositoryResponse(BaseModel):
         ..., description="The number of stars the repository has received."
     )
     user_id: str = Field(..., description="The ID of the user who saved the repository.")
+
+
+class GetRepositoriesResponse(BaseModel):
+    items: list[RepositoryResponse] = Field(
+        ..., description="A list of repositories matching the query."
+    )
+    total: int = Field(..., description="The total number of repositories matching the query.")
+    page: int | None = Field(None, description="The current page number for pagination.")
+    per_page: int | None = Field(None, description="The number of items per page for pagination.")

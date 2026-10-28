@@ -72,7 +72,9 @@ def test_select_git_repo_calls_select(monkeypatch):
 
     service.list_git_repos(db, "user-1")
 
-    select.assert_called_once_with(db, "user-1")
+    select.assert_called_once_with(
+        db, "user-1", page=None, per_page=None, filter=None, sort_by=None
+    )
 
 
 def test_delete_git_repo_calls_delete(monkeypatch):

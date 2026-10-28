@@ -28,12 +28,22 @@ def api():
 def test_list_empty_repositories(api):
     client, db = api
 
-    response = client.get("/repositories")
+    table = db.table.return_value
+    selection = table.select.return_value
+    owner_filter = selection.eq.return_value
+    paginated = owner_filter.range.return_value
+    paginated.execute.return_value = MagicMock(data=[], count=0)
+
+    payload = {"page": 1, "per_page": 10}
+    response = client.post("/repositories", json=payload)
 
     assert response.status_code == 200
-    db.table("repositories").select.assert_called_once_with("*")
-    db.table("repositories").select().eq.assert_called_once_with("user_id", "user-1")
-    assert response.json() == []
+    db.table.assert_called_once_with("repositories")
+    table.select.assert_called_once_with("*", count="exact")
+    selection.eq.assert_called_once_with("user_id", "user-1")
+    owner_filter.range.assert_called_once_with(0, 9)
+    paginated.execute.assert_called_once_with()
+    assert response.json() == {"items": [], "total": 0, "page": 1, "per_page": 10}
 
 
 def test_list_repositories(api):
@@ -54,16 +64,18 @@ def test_list_repositories(api):
     table = db.table.return_value
     selection = table.select.return_value
     owner_filter = selection.eq.return_value
-    owner_filter.execute.return_value = MagicMock(data=mock_data)
+    paginated = owner_filter.range.return_value
+    paginated.execute.return_value = MagicMock(data=mock_data, count=27)
 
-    response = client.get("/repositories")
+    response = client.post("/repositories", json={"page": 1, "per_page": 10})
 
     assert response.status_code == 200
     db.table.assert_called_once_with("repositories")
-    table.select.assert_called_once_with("*")
+    table.select.assert_called_once_with("*", count="exact")
     selection.eq.assert_called_once_with("user_id", "user-1")
-    owner_filter.execute.assert_called_once()
-    assert response.json() == mock_data
+    owner_filter.range.assert_called_once_with(0, 9)
+    paginated.execute.assert_called_once_with()
+    assert response.json() == {"items": mock_data, "total": 27, "page": 1, "per_page": 10}
 
 
 def test_save_repository(api):
