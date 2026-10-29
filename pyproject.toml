@@ -24,6 +24,7 @@ dependencies = [
     "pygithub>=2.10.0",
     "python-dotenv>=1.2.3",
     "supabase>=2.31.0",
+    "uvicorn>=0.54.0",
 ]
 
 [build-system]

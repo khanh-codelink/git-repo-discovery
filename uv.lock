@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.13"
 resolution-markers = [
     "python_full_version >= '3.14'",
@@ -752,6 +752,7 @@ dependencies = [
     { name = "pygithub" },
     { name = "python-dotenv" },
     { name = "supabase" },
+    { name = "uvicorn" },
 ]
 
 [package.dev-dependencies]
@@ -780,6 +781,7 @@ requires-dist = [
     { name = "pygithub", specifier = ">=2.10.0" },
     { name = "python-dotenv", specifier = ">=1.2.3" },
     { name = "supabase", specifier = ">=2.31.0" },
+    { name = "uvicorn", specifier = ">=0.54.0" },
 ]
 
 [package.metadata.requires-dev]
