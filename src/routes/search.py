@@ -14,21 +14,24 @@ router = APIRouter()
 
 def _search_github(github_client: Github, query: str, limit: int) -> list[RepoResult]:
     """Run the GitHub search (blocking: PyGithub fetches pages lazily while iterating)."""
-    repositories = github_client.search_repositories(query=query)
-    # Iterate rather than slice: slicing indexes into the list and raises IndexError
-    # when the search API reports a next page but returns it empty.
-    return [
-        RepoResult(
-            repo_id=str(repo.id),
-            name=repo.name,
-            full_name=repo.full_name,
-            topics=repo.topics,
-            description=repo.description,
-            html_url=repo.html_url,
-            stargazers_count=repo.stargazers_count,
-        )
-        for repo in islice(repositories, limit)
-    ]
+    if UNSUPPORTED in query:
+        return []
+    else:
+        repositories = github_client.search_repositories(query=query)
+        # Iterate rather than slice: slicing indexes into the list and raises IndexError
+        # when the search API reports a next page but returns it empty.
+        return [
+            RepoResult(
+                repo_id=str(repo.id),
+                name=repo.name,
+                full_name=repo.full_name,
+                topics=repo.topics,
+                description=repo.description,
+                html_url=repo.html_url,
+                stargazers_count=repo.stargazers_count,
+            )
+            for repo in islice(repositories, limit)
+        ]
 
 
 @router.post("/search", response_model=SearchResponse)

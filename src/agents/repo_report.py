@@ -2,9 +2,10 @@ from typing import Literal
 
 from src.agents.readme_extraction import ReadmeExtract
 from src.agents.system_prompt import COMPARISON_SYS_PROMPT, SUMMARY_SYS_PROMPT
-from src.llm import LLMService
 from src.schemas.report_schema import RepoAnalysis, RepoReport
 from src.schemas.repository_shema import RepoInput
+from src.services.guardrail import COMPARE_GUARDRAIL, SUMMARIZE_GUARDRAIL
+from src.services.llm import LLMService
 
 
 def _format_repository(repo: RepoInput, readme: ReadmeExtract | None) -> str:
@@ -25,9 +26,9 @@ async def generate_report(
     """Summarise each repository from its README and compare them against each other."""
     system = None
     if mode == "summary":
-        system = SUMMARY_SYS_PROMPT
+        system = SUMMARY_SYS_PROMPT + "\n" + SUMMARIZE_GUARDRAIL
     elif mode == "compare":
-        system = COMPARISON_SYS_PROMPT
+        system = COMPARISON_SYS_PROMPT + "\n" + COMPARE_GUARDRAIL
 
     assert system is not None, Exception("No system prompt selected.")
 
