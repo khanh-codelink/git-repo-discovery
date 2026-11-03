@@ -28,4 +28,4 @@ app.include_router(router)
 
 @app.get("/")
 def health_check():
-    return {"status": "online", "message": "Python backend running on Vercel"}
+    return {"status": "online", "message": "Python backend running for Git repo discovery"}
