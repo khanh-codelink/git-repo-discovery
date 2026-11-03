@@ -87,6 +87,36 @@ uv run uvicorn src.main:app \
 
 The API is available at <http://127.0.0.1:8000>. Open <http://127.0.0.1:8000/docs> for the interactive API documentation. The root endpoint at <http://127.0.0.1:8000/> returns a basic health status.
 
+## Azure container deployment
+
+The Docker image uses Python 3.13 and listens on port 3000 by default. Local environment files are excluded from the image; supply settings at runtime.
+
+Build and run locally:
+
+```sh
+docker build --platform linux/amd64 -t git-repo-discovery .
+docker run --rm -p 3000:3000 --env-file .env git-repo-discovery
+```
+
+The API is available at <http://localhost:3000>.
+
+Build locally with Docker and push to the `gitdiscovery` Azure Container Registry (no Azure-hosted build required). Install the Azure CLI, start Docker, and sign in to the subscription containing the registry:
+
+```sh
+az login
+bash build-and-push.sh
+```
+
+The script builds for `linux/amd64`, authenticates Docker to the registry, tags the image using the registry's login server, and pushes `git-repo-discovery:latest`. Your Azure account needs permission to push images to `gitdiscovery`.
+
+To push a versioned tag instead:
+
+```sh
+bash build-and-push.sh v1.0.0
+```
+
+For Azure Container Apps, set the ingress target port to `3000`. For Azure App Service using a classic custom container, set `WEBSITES_PORT=3000`; for a sidecar-enabled app, set the container's target port to `3000`. Configure the required environment variables or secrets in Azure. The optional `PORT` environment variable overrides the listening port; keep the Azure target port aligned with it.
+
 ## Database migrations
 
 Alembic manages the Supabase tables created by this backend (`summaries` and `comparisons`). Migrations live in `alembic/versions/` and are written by hand, because the app uses `supabase-py` rather than SQLAlchemy models, so `--autogenerate` has nothing to compare against.
