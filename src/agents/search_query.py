@@ -1,4 +1,5 @@
-from src.llm import LLMService
+from src.services.guardrail import SEARCH_GUARDRAIL
+from src.services.llm import LLMService
 
 UNSUPPORTED = "UNSUPPORTED"
 
@@ -19,7 +20,7 @@ async def analyze_query(text: str) -> str:
         f"If the query is not supported, respond with only '{UNSUPPORTED}'."
     )
     messages = [
-        {"role": "system", "content": system},
+        {"role": "system", "content": system + "\n" + SEARCH_GUARDRAIL},
         {"role": "user", "content": text},
     ]
 
