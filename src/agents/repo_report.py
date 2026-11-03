@@ -6,6 +6,7 @@ from src.schemas.report_schema import RepoAnalysis, RepoReport
 from src.schemas.repository_shema import RepoInput
 from src.services.guardrail import COMPARE_GUARDRAIL, SUMMARIZE_GUARDRAIL
 from src.services.llm import LLMService
+from src.services.observability import llm_run_config
 
 
 def _format_repository(repo: RepoInput, readme: ReadmeExtract | None) -> str:
@@ -40,7 +41,8 @@ async def generate_report(
     ]
 
     llm = LLMService.active_llm().with_structured_output(RepoReport)
-    report: RepoReport = await llm.ainvoke(messages)
+    run_name = "summarization" if mode == "summary" else "compare"
+    report: RepoReport = await llm.ainvoke(messages, config=llm_run_config(run_name, tags=[mode]))
     return report
 
 

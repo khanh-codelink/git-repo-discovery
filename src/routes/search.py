@@ -8,12 +8,15 @@ from github import Github
 from src.agents.search_query import UNSUPPORTED, analyze_query
 from src.auth.github_check import GithubClient
 from src.schemas.report_schema import RepoResult, SearchQuery, SearchResponse
+from src.services.observability import observe, record_input
 
 router = APIRouter()
 
 
+@observe(name="GitHub search", as_type="retriever", capture_input=False)
 def _search_github(github_client: Github, query: str, limit: int) -> list[RepoResult]:
     """Run the GitHub search (blocking: PyGithub fetches pages lazily while iterating)."""
+    record_input(query=query, limit=limit)
     if UNSUPPORTED in query:
         return []
     else:
@@ -35,7 +38,9 @@ def _search_github(github_client: Github, query: str, limit: int) -> list[RepoRe
 
 
 @router.post("/search", response_model=SearchResponse)
+@observe(name="Search pipeline", capture_input=False)
 async def search_repositories(search_query: SearchQuery, github_client: GithubClient):
+    record_input(**search_query.model_dump())
     analyzed_query = await analyze_query(search_query.query)
     if analyzed_query == UNSUPPORTED:
         raise HTTPException(status_code=400, detail="Query not supported")
