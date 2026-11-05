@@ -8,8 +8,10 @@ from src.schemas.repository_shema import (
     SaveRepositoryResponse,
 )
 from src.services import git_repo_service as service
+from src.shared.logging import get_logger
 
 router = APIRouter()
+logger = get_logger(__name__)
 
 
 @router.post("/save-repositories", response_model=SaveRepositoryResponse)
@@ -32,6 +34,7 @@ async def get_repositories(
         filter=input.filter,
         sort_by=input.sort_by,
     )
+    logger.info("Returning %d of %s saved repositories", len(response.data), response.count)
     return GetRepositoriesResponse(
         items=response.data, total=response.count, page=input.page, per_page=input.per_page
     )

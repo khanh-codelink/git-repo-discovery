@@ -8,15 +8,21 @@ from github import Github
 from src.agents.search_query import UNSUPPORTED, analyze_query
 from src.auth.github_check import GithubClient
 from src.schemas.report_schema import RepoResult, SearchQuery, SearchResponse
+from src.services.observability import observe, record_input
+from src.shared.logging import get_logger
 
 router = APIRouter()
+logger = get_logger(__name__)
 
 
+@observe(name="GitHub search", as_type="retriever", capture_input=False)
 def _search_github(github_client: Github, query: str, limit: int) -> list[RepoResult]:
     """Run the GitHub search (blocking: PyGithub fetches pages lazily while iterating)."""
+    record_input(query=query, limit=limit)
     if UNSUPPORTED in query:
         return []
     else:
+        logger.info("Searching GitHub for %r (limit %d)", query, limit)
         repositories = github_client.search_repositories(query=query)
         # Iterate rather than slice: slicing indexes into the list and raises IndexError
         # when the search API reports a next page but returns it empty.
@@ -35,14 +41,18 @@ def _search_github(github_client: Github, query: str, limit: int) -> list[RepoRe
 
 
 @router.post("/search", response_model=SearchResponse)
+@observe(name="Search pipeline", capture_input=False)
 async def search_repositories(search_query: SearchQuery, github_client: GithubClient):
+    record_input(**search_query.model_dump())
     analyzed_query = await analyze_query(search_query.query)
     if analyzed_query == UNSUPPORTED:
+        logger.warning("Search query not supported by the keyword extractor")
         raise HTTPException(status_code=400, detail="Query not supported")
 
     repo_results = await run_in_threadpool(
         _search_github, github_client, analyzed_query, search_query.limit
     )
+    logger.info("Search returned %d repositories", len(repo_results))
     return SearchResponse(
         search_id=str(uuid.uuid4()),
         search_query=search_query.query,

@@ -12,24 +12,32 @@ from src.auth.dependencies import AuthContext, get_auth_context
 from src.auth.github_check import GithubClient
 from src.schemas.report_schema import ComparisonResponse, RepositoriesRequest, SummaryResponse
 from src.schemas.repository_shema import RepoInput
+from src.services.observability import observe, propagate_attributes, record_input
+from src.shared.logging import get_logger
 
 router = APIRouter()
+logger = get_logger(__name__)
 
 
+@observe(name="fetch README", as_type="tool", capture_input=False)
 def _fetch_readme(github_client: Github, repo_id: str) -> ReadmeExtract | None:
     """Fetch and extract a repository's README (blocking). Returns None if unavailable."""
+    record_input(repo_id=repo_id)
     try:
         readme = github_client.get_repo(int(repo_id)).get_readme()
-    except (GithubException, ValueError):
+    except (GithubException, ValueError) as e:
+        logger.warning("No README for repo %s (%s)", repo_id, type(e).__name__)
         return None
     return extract_readme(readme.decoded_content.decode("utf-8", errors="replace"))
 
 
+@observe(name="README fetch + cleaning", capture_input=False)
 async def _fetch_readmes(
     github_client: Github,
     repositories: list[RepoInput],
     mode: Literal["summary", "compare"] = "summary",
 ) -> list[ReadmeExtract | None]:
+    record_input(repositories=[repo.full_name for repo in repositories], mode=mode)
     if mode == "compare":
         if len(repositories) <= 1:
             raise Exception("Compare mode should have more than 1 repo selected.")
@@ -53,6 +61,7 @@ def _missing_readme(
 
 
 @router.post("/summarize", response_model=SummaryResponse)
+@observe(name="Summary pipeline", capture_input=False)
 async def summarize_repositories(
     request: RepositoriesRequest,
     github_client: GithubClient,
@@ -64,8 +73,14 @@ async def summarize_repositories(
     assert user_id is not None
 
     repositories = request.repositories[:1]
-    readme = await _fetch_readmes(github_client, repositories, "summary")
-    report = await generate_report(list(zip(repositories, readme, strict=True)), "summary")
+    logger.info("Summarizing %s for user %s", repositories[0].full_name, user_id)
+    record_input(repositories=[repo.full_name for repo in repositories])
+    with propagate_attributes(
+        user_id=str(user_id), metadata={"mode": "summary", "repo_count": len(repositories)}
+    ):
+        readme = await _fetch_readmes(github_client, repositories, "summary")
+        report = await generate_report(list(zip(repositories, readme, strict=True)), "summary")
+
     response = SummaryResponse(
         summary_id=str(uuid.uuid4()),
         summary=render_report_markdown(report),
@@ -78,10 +93,12 @@ async def summarize_repositories(
     db.table("summaries").insert(
         {**response.model_dump(mode="json"), "user_id": str(user_id)}
     ).execute()
+    logger.info("Saved summary %s", response.summary_id)
     return response
 
 
 @router.post("/compare", response_model=ComparisonResponse)
+@observe(name="Comparison pipeline", capture_input=False)
 async def compare_repositories(
     request: RepositoriesRequest,
     github_client: GithubClient,
@@ -93,11 +110,16 @@ async def compare_repositories(
     assert user_id is not None
 
     repositories = request.repositories
+    logger.info("Comparing %d repositories for user %s", len(repositories), user_id)
 
     assert len(repositories) > 1, HTTPException(401, "More than 1 repos are required")
 
-    readme = await _fetch_readmes(github_client, repositories, "compare")
-    report = await generate_report(list(zip(repositories, readme, strict=True)), "compare")
+    record_input(repositories=[repo.full_name for repo in repositories])
+    with propagate_attributes(
+        user_id=str(user_id), metadata={"mode": "compare", "repo_count": len(repositories)}
+    ):
+        readme = await _fetch_readmes(github_client, repositories, "compare")
+        report = await generate_report(list(zip(repositories, readme, strict=True)), "compare")
 
     response = ComparisonResponse(
         comparison_id=str(uuid.uuid4()),
@@ -111,4 +133,5 @@ async def compare_repositories(
     db.table("comparisons").insert(
         {**response.model_dump(mode="json"), "user_id": str(user_id)}
     ).execute()
+    logger.info("Saved comparison %s", response.comparison_id)
     return response

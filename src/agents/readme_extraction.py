@@ -3,6 +3,10 @@ import re
 from mrkdwn_analysis import MarkdownAnalyzer
 from pydantic import BaseModel, Field
 
+from src.shared.logging import get_logger
+
+logger = get_logger(__name__)
+
 _IMAGE_RE = re.compile(r"!\[[^\]]*\](\([^)]*\)|\[[^\]]*\])")
 _LINK_RE = re.compile(r"\[([^\]]*)\](\([^)]*\)|\[[^\]]*\])")
 _HTML_TAG_RE = re.compile(r"<[^>]+>")
@@ -107,6 +111,7 @@ def _parse_tokens(markdown: str) -> list:
         return MarkdownAnalyzer.from_string(markdown).tokens
     except ValueError:
         # The parser raises on an unclosed code fence; close it and retry.
+        logger.debug("README has an unclosed code fence; closing it and re-parsing")
         return MarkdownAnalyzer.from_string(markdown + "\n```").tokens
 
 
