@@ -13,8 +13,10 @@ from src.auth.github_check import GithubClient
 from src.schemas.report_schema import ComparisonResponse, RepositoriesRequest, SummaryResponse
 from src.schemas.repository_shema import RepoInput
 from src.services.observability import observe, propagate_attributes, record_input
+from src.shared.logging import get_logger
 
 router = APIRouter()
+logger = get_logger(__name__)
 
 
 @observe(name="fetch README", as_type="tool", capture_input=False)
@@ -23,7 +25,8 @@ def _fetch_readme(github_client: Github, repo_id: str) -> ReadmeExtract | None:
     record_input(repo_id=repo_id)
     try:
         readme = github_client.get_repo(int(repo_id)).get_readme()
-    except (GithubException, ValueError):
+    except (GithubException, ValueError) as e:
+        logger.warning("No README for repo %s (%s)", repo_id, type(e).__name__)
         return None
     return extract_readme(readme.decoded_content.decode("utf-8", errors="replace"))
 
@@ -70,6 +73,7 @@ async def summarize_repositories(
     assert user_id is not None
 
     repositories = request.repositories[:1]
+    logger.info("Summarizing %s for user %s", repositories[0].full_name, user_id)
     record_input(repositories=[repo.full_name for repo in repositories])
     with propagate_attributes(
         user_id=str(user_id), metadata={"mode": "summary", "repo_count": len(repositories)}
@@ -89,6 +93,7 @@ async def summarize_repositories(
     db.table("summaries").insert(
         {**response.model_dump(mode="json"), "user_id": str(user_id)}
     ).execute()
+    logger.info("Saved summary %s", response.summary_id)
     return response
 
 
@@ -105,6 +110,7 @@ async def compare_repositories(
     assert user_id is not None
 
     repositories = request.repositories
+    logger.info("Comparing %d repositories for user %s", len(repositories), user_id)
 
     assert len(repositories) > 1, HTTPException(401, "More than 1 repos are required")
 
@@ -127,4 +133,5 @@ async def compare_repositories(
     db.table("comparisons").insert(
         {**response.model_dump(mode="json"), "user_id": str(user_id)}
     ).execute()
+    logger.info("Saved comparison %s", response.comparison_id)
     return response

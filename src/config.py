@@ -53,6 +53,8 @@ class LangfuseConfig(BaseSettings):
 class GitRepoDiscoveryConfig(BaseSettings):
     """Configuration for Git repository discovery."""
 
+    loglevel: str = "INFO"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

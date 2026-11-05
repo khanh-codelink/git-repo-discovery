@@ -1,6 +1,9 @@
 from src.services.guardrail import SEARCH_GUARDRAIL
 from src.services.llm import LLMService
 from src.services.observability import llm_run_config
+from src.shared.logging import get_logger
+
+logger = get_logger(__name__)
 
 UNSUPPORTED = "UNSUPPORTED"
 
@@ -33,4 +36,6 @@ async def analyze_query(text: str) -> str:
             metadata={"guardrail": SEARCH_GUARDRAIL, "user_query": text},
         ),
     )
-    return resp.text.strip()
+    analyzed = resp.text.strip()
+    logger.info("Keyword extraction produced %r", analyzed)
+    return analyzed

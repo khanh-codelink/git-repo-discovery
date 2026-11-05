@@ -16,6 +16,7 @@ from langfuse import Langfuse, get_client, observe, propagate_attributes
 from langfuse.langchain import CallbackHandler
 
 from src.config import get_langfuse_config
+from src.shared.logging import get_logger
 
 __all__ = [
     "flush_langfuse",
@@ -26,7 +27,7 @@ __all__ = [
     "record_input",
 ]
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def init_langfuse() -> None:
@@ -48,11 +49,13 @@ def init_langfuse() -> None:
         base_url=config.base_url,
         tracing_enabled=True,
     )
+    logger.info("Langfuse tracing is on, sending traces to %s", config.base_url)
 
 
 def flush_langfuse() -> None:
     """Send any buffered traces. Call before the process exits."""
     if get_langfuse_config().is_active:
+        logger.info("Flushing buffered Langfuse traces")
         get_client().flush()
 
 
